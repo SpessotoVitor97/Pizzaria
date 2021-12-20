@@ -1,12 +1,14 @@
 import boto3
 import json
 import datetime
+
 import random
 
 clientes = ['rafael','maria','teresa', 'tatiane', 'murilo']
 statusPossiveis = ['pedido feito','montando', 'no forno','saiu do forno', 'embalando','pronto']
 
 peeker = random.SystemRandom()
+
 eventBridge = boto3.client('events')
 
 def put_events(eventBus, source, detailType, detail):
@@ -24,7 +26,7 @@ def put_events(eventBus, source, detailType, detail):
     print("EventBridge Response: {}".format(json.dumps(response)))
     
 def makeEvent(status, pedido, cliente):
-    eventBus="Pizzaria"
+    eventBus="pizzaria"
     source = "com.pizza.status"
     detailType = "Alteracao Pizza"
     detail = {
@@ -34,8 +36,8 @@ def makeEvent(status, pedido, cliente):
     }
     put_events(eventBus, source, detailType, detail)
 
-for pedido in range(100):
+for i in range(100):
    cliente = peeker.choice(clientes)
    
    for status in statusPossiveis:
-       makeEvent(status, pedido, cliente)
+       makeEvent(status, i, cliente)
