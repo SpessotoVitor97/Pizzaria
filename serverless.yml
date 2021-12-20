@@ -1,0 +1,58 @@
+service: event-Pizza
+
+frameworkVersion: '2'
+
+provider:
+  name: aws
+  runtime: python3.8
+  region: 'us-east-1'
+  memorySize: 128
+  lambdaHashingVersion: 20201221
+  iam:
+    role: !Sub arn:aws:iam::${AWS::AccountId}:role/LabRole
+  eventBridge:
+    useCloudFormation: true
+  environment:
+    sqs_url: !Sub https://sqs.us-east-1.amazonaws.com/${AWS::AccountId}/espera-entrega
+    sqs_url_dest: !Sub https://sqs.us-east-1.amazonaws.com/076121878322/espera-entrega_dest
+
+functions:
+  source:
+    handler: handler.sourceHandler
+    events:
+    - eventBridge:
+        eventBus:
+          - arn:aws:events:${AWS::Region}:${AWS::AccountId}:event-bus/Pizzaria
+        pattern:
+          source:
+            - com.pizza.status
+
+  detail:
+    handler: handler.detailHandler
+    events:
+      - eventBridge:
+          eventBus:
+            - arn:aws:events:${AWS::Region}:${AWS::AccountId}:event-bus/Pizzaria
+          pattern:
+            source:
+              - com.pizza.status
+            detail-type:
+              - Pedido Pronto
+            detail:
+              location:
+              - eu-east
+  
+  sqsHandler:
+    handler: handler.sqsHandler
+    events:
+      - schedule:
+          rate: rate(5 minutes)
+          enabled: true
+  
+  entrege:
+    handler: handler.consume
+    events:
+      - sqs:
+          arn: arn:aws:sqs:us-east-1:076121878322:espera-entrega
+          batchSize: 1
+          enabled: true
